@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +14,13 @@ import (
 	"google.golang.org/api/calendar/v3"
 	"google.golang.org/api/option"
 )
+
+type Event struct {
+	Persona string `json:"persona"`
+	Action  string `json:"action"`
+	Topic   string `json:"topic"`
+	Details string `json:"details"`
+}
 
 func main() {
 
@@ -43,8 +48,8 @@ func main() {
 	// Parse events and filter the necessary ones
 	filteredEvents := parseAndFilterEvents(allEvents)
 
-	// Write the filtered events into CSV
-	err = writeToCsvFile(filteredEvents)
+	// Write the filtered events into JSON
+	err = writeToJsonFile(filteredEvents)
 	if err != nil {
 		return
 	}
@@ -198,11 +203,9 @@ func fetchEvents(
 // Parse & filter necessary calendar events
 func parseAndFilterEvents(
 	allEvents []*calendar.Event,
-) [][]string {
+) []Event {
 
-	var parsedEvents [][]string
-	columns := []string{"Persona", "Action", "Topic", "Details"}
-	parsedEvents = append(parsedEvents, columns)
+	var filteredEvents []Event
 
 	for _, events := range allEvents {
 		date := events.Start.DateTime
@@ -218,37 +221,41 @@ func parseAndFilterEvents(
 			persona := items[0]
 			action := items[1]
 			topic := items[2]
-			details, _ := strconv.Unquote(events.Description)
+			// details, _ := strconv.Unquote(events.Description)
 
-			values := []string{persona, action, topic, details}
-			parsedEvents = append(parsedEvents, values)
+			filteredEvent := Event{
+				Persona: persona,
+				Action:  action,
+				Topic:   topic,
+				Details: events.Description,
+			}
+
+			filteredEvents = append(filteredEvents, filteredEvent)
 		}
 	}
-	return parsedEvents
+	return filteredEvents
 }
 
 // Write results into a CSV file
-func writeToCsvFile(
-	data [][]string,
+func writeToJsonFile(
+	data []Event,
 ) error {
-	// Create a new CSV file
-	file, err := os.Create("data.csv")
+	// Open or create a JSON file for writing
+	file, err := os.Create("report.json")
 	if err != nil {
-		panic(err)
+		fmt.Println("Error creating file:", err)
+		return err
 	}
 	defer file.Close()
 
-	// Create a new CSV writer
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	// Write data to CSV file
-	for _, value := range data {
-		err := writer.Write(value)
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
+	// Encode the data and write it to the file
+	encoder := json.NewEncoder(file)
+	err = encoder.Encode(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return err
 	}
+
+	fmt.Println("Data written successfully.")
 	return nil
 }
