@@ -21,14 +21,14 @@ func main() {
 
 	// Fetch Google Calendar events
 	calendarSvc := gcalendar.New(client)
-	_, err = calendarSvc.FetchEvents(ctx)
+	events, err := calendarSvc.FetchEvents(ctx)
 	if err != nil {
 		return
 	}
 
 	// Create Google Sheets with fetched events
 	sheetsSvc := gsheets.New(client)
-	_, err = sheetsSvc.CreateSheet(ctx)
+	_, err = sheetsSvc.CreateSheet(ctx, events)
 	if err != nil {
 		return
 	}

@@ -1,6 +1,7 @@
 package sheets
 
 import (
+	"calendar/googlesvc/dto"
 	"context"
 	"fmt"
 	"log"
@@ -25,6 +26,7 @@ func New(
 
 func (s *GoogleSheetsService) CreateSheet(
 	ctx context.Context,
+	events []dto.Event,
 ) (
 	*sheets.Spreadsheet,
 	error,
@@ -37,6 +39,12 @@ func (s *GoogleSheetsService) CreateSheet(
 
 	// Call the Sheets API to create the sheet
 	spreadsheet, err := s.createSheet(svc)
+	if err != nil {
+		return nil, err
+	}
+
+	// Call the Sheets API to create the sheet
+	err = s.addEventDataToSheet(svc, spreadsheet, events)
 	if err != nil {
 		return nil, err
 	}
@@ -81,5 +89,56 @@ func (s *GoogleSheetsService) createSheet(
 	fmt.Println(spreadsheet.SpreadsheetId)
 	fmt.Println(spreadsheet.SpreadsheetUrl)
 
-	return sheet, nil
+	return spreadsheet, nil
+}
+
+func (s *GoogleSheetsService) addEventDataToSheet(
+	svc *sheets.Service,
+	spreadsheet *sheets.Spreadsheet,
+	events []dto.Event,
+) error {
+
+	// Add data to the sheet
+	var values [][]interface{}
+	values = append(values, []interface{}{
+		"StartDate",
+		"EndDate",
+		"Persona",
+		"Action",
+		"Topic",
+		"Details",
+		"Attendees",
+	})
+
+	for _, event := range events {
+		attendees := ""
+		for _, attendee := range event.Attendees {
+			attendees = attendees +
+				fmt.Sprintf("- %s (%s) [%s]\n", attendee.Email, attendee.Name, attendee.Response)
+		}
+		values = append(values, []interface{}{
+			event.StartDate,
+			event.EndDate,
+			event.Persona,
+			event.Action,
+			event.Topic,
+			event.Details,
+			attendees,
+		})
+	}
+
+	// Specify range for writing data
+	rangeData := fmt.Sprintf("A1:G%d", len(events)+1)
+
+	// Write data to the sheet
+	_, err := svc.Spreadsheets.Values.Update(spreadsheet.SpreadsheetId, rangeData,
+		&sheets.ValueRange{
+			Values: values,
+		}).ValueInputOption("RAW").Do()
+	if err != nil {
+		fmt.Println("Unable to write data to sheet: " + err.Error())
+		return err
+	}
+
+	return nil
 }

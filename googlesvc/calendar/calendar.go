@@ -138,31 +138,52 @@ func (s *GoogleCalendarService) parseAndFilterEvents(
 	var filteredEvents []dto.Event
 
 	for _, events := range allEvents {
-		date := events.Start.DateTime
-		if date == "" {
-			date = events.Start.Date
+
+		// Event time
+		startDate := events.Start.DateTime
+		if startDate == "" {
+			startDate = events.Start.Date
 		}
-		fmt.Printf("[%v] %v -> %v\n", date, events.Summary, events.Description)
+		endDate := events.End.DateTime
+		if endDate == "" {
+			endDate = events.End.Date
+		}
 
 		if strings.HasPrefix(events.Summary, "!!!") {
+
+			// Fundamental information
 			title := events.Summary[3:]
 			items := strings.Split(title, ":")
-
 			persona := items[0]
 			action := items[1]
 			topic := items[2]
-			// details, _ := strconv.Unquote(events.Description)
+			details := events.Description
+
+			// Attendees
+			attendees := []dto.Attendee{}
+			for _, attendee := range events.Attendees {
+				attendees = append(attendees, dto.Attendee{
+					Name:     attendee.DisplayName,
+					Email:    attendee.Email,
+					Response: attendee.ResponseStatus,
+				})
+			}
 
 			filteredEvent := dto.Event{
-				Persona: persona,
-				Action:  action,
-				Topic:   topic,
-				Details: events.Description,
+				StartDate: startDate,
+				EndDate:   endDate,
+				Persona:   persona,
+				Action:    action,
+				Topic:     topic,
+				Details:   details,
+				Attendees: attendees,
 			}
 
 			filteredEvents = append(filteredEvents, filteredEvent)
 		}
 	}
+
+	// TODO: Sort events by startDate
 	return filteredEvents
 }
 
