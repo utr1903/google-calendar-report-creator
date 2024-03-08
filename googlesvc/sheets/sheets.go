@@ -89,9 +89,6 @@ func (s *GoogleSheetsService) createSheet(
 		log.Fatalf("Unable to create spreadsheet: %v", err)
 	}
 
-	fmt.Println(spreadsheet.SpreadsheetId)
-	fmt.Println(spreadsheet.SpreadsheetUrl)
-
 	return spreadsheet, nil
 }
 
