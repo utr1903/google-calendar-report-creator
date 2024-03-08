@@ -103,7 +103,6 @@ func (s *GoogleCalendarService) fetchEvents(
 	var allEvents []*calendar.Event
 	allEvents = append(allEvents, initialEvents.Items...)
 
-	fmt.Println("Upcoming events:")
 	if len(initialEvents.Items) == 0 {
 		fmt.Println("No upcoming events found.")
 	}
