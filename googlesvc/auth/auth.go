@@ -11,6 +11,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
+	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/sheets/v4"
 )
 
@@ -56,7 +57,11 @@ func (s *GoogleAuthService) prepareConfig() (
 	}
 
 	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope, sheets.SpreadsheetsScope)
+	config, err := google.ConfigFromJSON(b,
+		calendar.CalendarReadonlyScope,
+		sheets.SpreadsheetsScope,
+		drive.DriveScope,
+	)
 	// config, err := google.ConfigFromJSON(b, calendar.CalendarReadonlyScope)
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)

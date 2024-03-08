@@ -3,6 +3,7 @@ package main
 import (
 	gauth "calendar/googlesvc/auth"
 	gcalendar "calendar/googlesvc/calendar"
+	gdrive "calendar/googlesvc/drive"
 	gsheets "calendar/googlesvc/sheets"
 	"context"
 )
@@ -26,9 +27,16 @@ func main() {
 		return
 	}
 
-	// Create Google Sheets with fetched events
+	// Create Google Sheet with fetched events
 	sheetsSvc := gsheets.New(client)
-	_, err = sheetsSvc.CreateSheet(ctx, events)
+	spreadsheet, err := sheetsSvc.CreateSheet(ctx, events)
+	if err != nil {
+		return
+	}
+
+	// Move Google Sheet to specific folder
+	driveSvc := gdrive.New(client)
+	err = driveSvc.MoveFile(ctx, spreadsheet.SpreadsheetId)
 	if err != nil {
 		return
 	}
