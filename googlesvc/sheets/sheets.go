@@ -2,6 +2,7 @@ package sheets
 
 import (
 	"calendar/googlesvc/dto"
+	"calendar/sentiment"
 	"context"
 	"fmt"
 	"log"
@@ -13,14 +14,16 @@ import (
 )
 
 type GoogleSheetsService struct {
-	client *http.Client
+	client            *http.Client
+	sentimentAnalyzer sentiment.SentimentAnalyzer
 }
 
 func New(
 	client *http.Client,
 ) *GoogleSheetsService {
 	return &GoogleSheetsService{
-		client: client,
+		client:            client,
+		sentimentAnalyzer: sentiment.NewGoVader(),
 	}
 }
 
@@ -108,14 +111,22 @@ func (s *GoogleSheetsService) addEventDataToSheet(
 		"Topic",
 		"Details",
 		"Attendees",
+		"Sentiment",
 	})
 
 	for _, event := range events {
+
+		// Format attendees
 		attendees := ""
 		for _, attendee := range event.Attendees {
 			attendees = attendees +
 				fmt.Sprintf("- %s (%s) [%s]\n", attendee.Email, attendee.Name, attendee.Response)
 		}
+
+		// Run sentiment analysis
+		sentiment := s.sentimentAnalyzer.Run(event.Details)
+
+		// Create row
 		values = append(values, []interface{}{
 			event.StartDate,
 			event.EndDate,
@@ -124,11 +135,12 @@ func (s *GoogleSheetsService) addEventDataToSheet(
 			event.Topic,
 			event.Details,
 			attendees,
+			sentiment,
 		})
 	}
 
 	// Specify range for writing data
-	rangeData := fmt.Sprintf("A1:G%d", len(events)+1)
+	rangeData := fmt.Sprintf("A1:H%d", len(events)+1)
 
 	// Write data to the sheet
 	_, err := svc.Spreadsheets.Values.Update(spreadsheet.SpreadsheetId, rangeData,
