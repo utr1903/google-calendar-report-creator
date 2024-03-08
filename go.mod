@@ -3,6 +3,7 @@ module calendar
 go 1.21.5
 
 require (
+	github.com/jonreiter/govader v0.0.0-20230129030235-c72a790a959e
 	golang.org/x/oauth2 v0.17.0
 	google.golang.org/api v0.169.0
 )
@@ -28,6 +29,7 @@ require (
 	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
+	gonum.org/v1/gonum v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240304161311-37d4d3c04a78 // indirect
 	google.golang.org/grpc v1.62.0 // indirect
